@@ -34,6 +34,11 @@ meris_cc_t* build_cc_data(int* len) {
     return polymoon_cc_data;
 }
 
+const __FlashStringHelper * build_name () {
+    static const __FlashStringHelper * name = F("    POLYMOON    ");
+    return name;
+}
+
 int CC_DATA_LEN;
 static const meris_cc_t* CC_DATA = build_cc_data(&CC_DATA_LEN);
-
+const __FlashStringHelper * MERIS_DEVICE_NAME = build_name();

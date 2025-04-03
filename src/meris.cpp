@@ -1,6 +1,12 @@
 // #include <MIDI.h>
-#include "debug.h"
+
+#include <Arduino.h>
+#include <LiquidCrystal_I2C.h>
+
 #include "button.h"
+#include "debug.h"
+#include "version.h"
+
 
 #ifdef DEVICE_POLYMOON
 #include "polymoon_cc.h"
@@ -20,10 +26,13 @@
 #define BANK_INTERVAL_MS    (500)
 
 
-int             _cc_index = 0;
-unsigned long   _bank_ts;
-int             _bank = 0;
-bool            _cc_config = false;
+int                 _cc_index = 0;
+bool                _cc_config = false;
+unsigned long       _bank_ts;
+int                 _bank = 0;
+
+LiquidCrystal_I2C   _display(0x27, 16, 2);
+
 
 
 void on_button_event(uint8_t id, EButtonScanResult event);
@@ -162,15 +171,24 @@ void on_button_event(uint8_t id, EButtonScanResult event) {
 }
 
 
-
 void setup() {
     dprintinit(9600);
     dprintln(F("start"));
     dprintln(CC_DATA_LEN);
     // MIDI.begin(MIDI_CHANNEL_OMNI);  // Listen to all incoming messages
     _bank = 0;
-    update_bank_ui();
     
+    _display.init();
+    _display.clear();
+    _display.backlight();
+    _display.setCursor(0, 0);
+    _display.print(MERIS_DEVICE_NAME);
+    _display.setCursor(0, 1);
+    _display.print(GIT_HASH);
+    _display.setCursor(11, 1);
+    _display.print(GIT_TAG);
+    delay(1000);
+    update_bank_ui();
 }
 
 
