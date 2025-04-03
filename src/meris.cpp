@@ -1,0 +1,196 @@
+// #include <MIDI.h>
+#include "debug.h"
+#include "button.h"
+
+#ifdef DEVICE_POLYMOON
+#include "polymoon_cc.h"
+#endif
+
+#define MAX_BUTTONS         (4)
+#define MAX_PATCHES         (16)
+#define MAX_BANKS           (MAX_PATCHES / MAX_BUTTONS)
+
+#define PIN_BUTTON_1        (2)
+#define PIN_BUTTON_2        (3)
+#define PIN_BUTTON_3        (4)
+#define PIN_BUTTON_4        (5)
+#define PIN_EXPRESSION      (A0)
+
+#define LONGPRESS_DELAY_MS  (500)
+#define BANK_INTERVAL_MS    (500)
+
+
+int             _cc_index = 0;
+unsigned long   _bank_ts;
+int             _bank = 0;
+bool            _cc_config = false;
+
+
+void on_button_event(uint8_t id, EButtonScanResult event);
+
+// MIDI_CREATE_DEFAULT_INSTANCE();
+
+Button          _button_1(PIN_BUTTON_1, LONGPRESS_DELAY_MS, on_button_event);
+Button          _button_2(PIN_BUTTON_2, LONGPRESS_DELAY_MS, on_button_event);
+Button          _button_3(PIN_BUTTON_3, LONGPRESS_DELAY_MS, on_button_event);
+Button          _button_4(PIN_BUTTON_4, LONGPRESS_DELAY_MS, on_button_event);
+
+
+void update_bank_ui() {
+    dprint(F("BANK: "));
+    dprintln(_bank + 1);
+}
+
+
+void update_pc_ui(uint8_t pc) {
+    dprint(F("PC: "));
+    dprintln(pc);
+}
+
+
+void update_cc_ui(uint8_t cc_val) {
+    dprint(F("CC VAL: "));
+    dprintln(cc_val);
+}
+
+
+void update_cc_info() {
+    dprint(F("CC #"));
+    dprint(CC_DATA[_cc_index].idx);
+    dprint(F(" - "));
+    dprintln(CC_DATA[_cc_index].name);
+}
+
+
+void send_pc(uint8_t command) {
+    uint8_t pc = (command & 0x7F); // Ensure valid MIDI range (0-127)
+    // MIDI.sendProgramChange(pc, 1); // Send on MIDI channel 1
+}
+
+
+void send_cc(uint8_t value) {
+    uint8_t cc = (value & 0x7F); // Ensure valid MIDI range (0-127)
+    // MIDI.sendControlChange(CC_DATA[_cc_index].idx, cc, 1);
+}
+
+
+void on_button_event(uint8_t id, EButtonScanResult event) {
+
+    static bool _bt2_ulp = false;
+    static bool _bt3_ulp = false;
+
+    switch (event) {
+        case EButtonDown: {
+        } break;
+
+        case EButtonUp: {
+        } break;
+
+        case EButtonClick: {
+            if(_cc_config) {
+                // CC config mode: buttons 1 & 4 nagigates thru CC values
+                if (id == PIN_BUTTON_1) {
+                    if (++_cc_index == CC_DATA_LEN) {
+                        _cc_index = 0;
+                    }
+                    update_cc_info();
+                }
+                else if (id == PIN_BUTTON_4) {
+                    if (--_cc_index < 0) {
+                        _cc_index = CC_DATA_LEN - 1;
+                    }
+                    update_cc_info();
+                }
+            }
+            else {
+                // PC mode: buttons change current patch
+                uint8_t pc = (id - PIN_BUTTON_1) + ((_bank * MAX_BUTTONS) + 1);
+                send_pc(pc);
+                update_pc_ui(pc);
+            }
+        } break;
+
+        case EButtonLongpress: {
+            _bank_ts = 0;
+
+            // CC config mode
+            if (id == PIN_BUTTON_2) {
+                _bt2_ulp = true;
+            }
+            if (id == PIN_BUTTON_3) {
+                _bt3_ulp = true;
+            }
+            if (_bt2_ulp && _bt3_ulp) {
+                _cc_config = !_cc_config;
+                dprint(F("CC CONFIG "));
+                dprintln(_cc_config ? F("ON") : F("OFF"));
+                if (_cc_config) {
+                    update_cc_info();
+                }
+                else {
+                    update_bank_ui();
+                }
+            }
+        } break;
+        case EButtonHold: {
+            // bank up/down
+            if (millis() - _bank_ts > BANK_INTERVAL_MS) {
+                if (id == PIN_BUTTON_1) {
+                    if (++_bank == MAX_BANKS) {
+                        _bank = 0;
+                    }
+                    update_bank_ui();
+                }
+                else if (id == PIN_BUTTON_4) {
+                    if (--_bank < 0) {
+                        _bank = MAX_BANKS - 1;
+                    }
+                    update_bank_ui();
+                }
+                _bank_ts = millis();
+            }
+        } break;
+        case EButtonUnlongpress: {
+            if (id ==  PIN_BUTTON_2) {
+                _bt2_ulp = false;
+            }
+            if (id ==  PIN_BUTTON_3) {
+                _bt3_ulp = false;
+            }
+        } break;
+    }
+}
+
+
+
+void setup() {
+    dprintinit(9600);
+    dprintln(F("start"));
+    dprintln(CC_DATA_LEN);
+    // MIDI.begin(MIDI_CHANNEL_OMNI);  // Listen to all incoming messages
+    _bank = 0;
+    update_bank_ui();
+    
+}
+
+
+void loop() {
+    static int _exp_prev = 0;
+    _button_1.scan();
+    _button_2.scan();
+    _button_3.scan();
+    _button_4.scan();
+
+    if (!_cc_config) {
+        int raw = analogRead(PIN_EXPRESSION);
+        // TODO: filter ?
+        // ...
+        meris_cc_t cc_data = CC_DATA[_cc_index];
+        int exp = map(raw, 0, 1023, cc_data.min, cc_data.max);
+        if (exp != _exp_prev) {
+            send_cc(exp);
+            update_cc_ui(exp);
+            _exp_prev = exp;
+        }
+    }
+}
