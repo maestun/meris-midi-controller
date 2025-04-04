@@ -1,7 +1,9 @@
-// #include <MIDI.h>
 
 #include <Arduino.h>
 #include <LiquidCrystal_I2C.h>
+#include <SmoothProgress.h>
+#include <BarStyle0.h>
+// #include <MIDI.h>
 
 #include "button.h"
 #include "debug.h"
@@ -30,9 +32,10 @@ int                 _cc_index = 0;
 bool                _cc_config = false;
 unsigned long       _bank_ts;
 int                 _bank = 0;
-
+int                 _patch = 0;
 LiquidCrystal_I2C   _display(0x27, 16, 2);
-
+LCD                 _pg_lcd(_display, barStyle0);
+SmoothProgressBar   _progress(_pg_lcd, 16, 0, 1, 1);
 
 
 void on_button_event(uint8_t id, EButtonScanResult event);
@@ -45,29 +48,52 @@ Button          _button_3(PIN_BUTTON_3, LONGPRESS_DELAY_MS, on_button_event);
 Button          _button_4(PIN_BUTTON_4, LONGPRESS_DELAY_MS, on_button_event);
 
 
-void update_bank_ui() {
+void update_bank_ui(int bank, int patch) {
     dprint(F("BANK: "));
-    dprintln(_bank + 1);
+    dprintln(bank);
+
+    _display.setCursor(0, 0);
+    _display.print(F("B"));
+    _display.print(bank);
+    _display.print(F(" P"));
+    _display.print(patch);
+    _display.display();
 }
 
 
-void update_pc_ui(uint8_t pc) {
-    dprint(F("PC: "));
-    dprintln(pc);
-}
+// void update_pc_ui(uint8_t pc) {
+//     dprint(F("PC: "));
+//     dprintln(pc);
+// }
 
 
-void update_cc_ui(uint8_t cc_val) {
+void update_cc_ui(uint8_t cc_val, uint8_t percent) {
     dprint(F("CC VAL: "));
     dprintln(cc_val);
+
+    _display.setCursor(0, 0);
+    _display.print(F("CC #"));
+    _display.print(cc_val);
+    _progress.showProgressPct(percent);
+
+    // _display.display();
 }
 
 
 void update_cc_info() {
+    uint8_t idx = CC_DATA[_cc_index].idx;
+    const __FlashStringHelper * name = CC_DATA[_cc_index].name;
     dprint(F("CC #"));
-    dprint(CC_DATA[_cc_index].idx);
+    dprint(idx);
     dprint(F(" - "));
-    dprintln(CC_DATA[_cc_index].name);
+    dprintln(name);
+
+    _display.setCursor(0, 0);
+    _display.print(F("CC #"));
+    _display.print(idx);
+    _display.setCursor(0, 1);
+    _display.print(name);
+    _display.display();
 }
 
 
@@ -114,8 +140,10 @@ void on_button_event(uint8_t id, EButtonScanResult event) {
             else {
                 // PC mode: buttons change current patch
                 uint8_t pc = (id - PIN_BUTTON_1) + ((_bank * MAX_BUTTONS) + 1);
+                _patch = pc;
                 send_pc(pc);
-                update_pc_ui(pc);
+                // update_pc_ui(pc);
+                update_bank_ui(_bank + 1, _patch);
             }
         } break;
 
@@ -137,7 +165,7 @@ void on_button_event(uint8_t id, EButtonScanResult event) {
                     update_cc_info();
                 }
                 else {
-                    update_bank_ui();
+                    update_bank_ui(_bank + 1, _patch);
                 }
             }
         } break;
@@ -148,13 +176,13 @@ void on_button_event(uint8_t id, EButtonScanResult event) {
                     if (++_bank == MAX_BANKS) {
                         _bank = 0;
                     }
-                    update_bank_ui();
+                    update_bank_ui(_bank + 1, _patch);
                 }
                 else if (id == PIN_BUTTON_4) {
                     if (--_bank < 0) {
                         _bank = MAX_BANKS - 1;
                     }
-                    update_bank_ui();
+                    update_bank_ui(_bank + 1, _patch);
                 }
                 _bank_ts = millis();
             }
@@ -181,6 +209,8 @@ void setup() {
     _display.init();
     _display.clear();
     _display.backlight();
+    _pg_lcd.begin();
+
     _display.setCursor(0, 0);
     _display.print(MERIS_DEVICE_NAME);
     _display.setCursor(0, 1);
@@ -188,7 +218,7 @@ void setup() {
     _display.setCursor(11, 1);
     _display.print(GIT_TAG);
     delay(1000);
-    update_bank_ui();
+    update_bank_ui(_bank + 1, _patch + 1);
 }
 
 
@@ -207,7 +237,8 @@ void loop() {
         int exp = map(raw, 0, 1023, cc_data.min, cc_data.max);
         if (exp != _exp_prev) {
             send_cc(exp);
-            update_cc_ui(exp);
+            int percent = map(exp, cc_data.min, cc_data.max, 0, 100);
+            update_cc_ui(exp, percent);
             _exp_prev = exp;
         }
     }
