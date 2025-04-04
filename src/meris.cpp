@@ -1,9 +1,10 @@
 
 #include <Arduino.h>
+#include <SoftwareSerial.h>
 #include <LiquidCrystal_I2C.h>
 #include <SmoothProgress.h>
 #include <BarStyle0.h>
-// #include <MIDI.h>
+#include <MIDI.h>
 
 #include "button.h"
 #include "debug.h"
@@ -23,6 +24,8 @@
 #define PIN_BUTTON_3        (4)
 #define PIN_BUTTON_4        (5)
 #define PIN_EXPRESSION      (A0)
+#define PIN_MIDI_TX         (6)
+#define PIN_MIDI_RX         (10) // unused
 
 #define LONGPRESS_DELAY_MS  (500)
 #define BANK_INTERVAL_MS    (500)
@@ -36,11 +39,13 @@ int                 _patch = 0;
 LiquidCrystal_I2C   _display(0x27, 16, 2);
 LCD                 _pg_lcd(_display, barStyle0);
 SmoothProgressBar   _progress(_pg_lcd, 16, 0, 1, 1);
-
+SoftwareSerial      _midi_serial(PIN_MIDI_RX, PIN_MIDI_TX);
 
 void on_button_event(uint8_t id, EButtonScanResult event);
 
 // MIDI_CREATE_DEFAULT_INSTANCE();
+MIDI_CREATE_INSTANCE(SoftwareSerial, _midi_serial, _midi_out);
+
 
 Button          _button_1(PIN_BUTTON_1, LONGPRESS_DELAY_MS, on_button_event);
 Button          _button_2(PIN_BUTTON_2, LONGPRESS_DELAY_MS, on_button_event);
@@ -100,12 +105,14 @@ void update_cc_info() {
 void send_pc(uint8_t command) {
     uint8_t pc = (command & 0x7F); // Ensure valid MIDI range (0-127)
     // MIDI.sendProgramChange(pc, 1); // Send on MIDI channel 1
+    _midi_out.sendProgramChange(pc, 1);
 }
 
 
 void send_cc(uint8_t value) {
     uint8_t cc = (value & 0x7F); // Ensure valid MIDI range (0-127)
     // MIDI.sendControlChange(CC_DATA[_cc_index].idx, cc, 1);
+    _midi_out.sendControlChange(CC_DATA[_cc_index].idx, cc, 1);
 }
 
 
@@ -200,6 +207,11 @@ void on_button_event(uint8_t id, EButtonScanResult event) {
 
 
 void setup() {
+
+    _midi_serial.begin(31250); // Initialize SoftwareSerial at MIDI baud rate
+    _midi_out.begin();         // Initialize the MIDI library
+  
+
     dprintinit(9600);
     dprintln(F("start"));
     dprintln(CC_DATA_LEN);
