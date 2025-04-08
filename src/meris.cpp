@@ -31,12 +31,15 @@
 #define LONGPRESS_DELAY_MS  (500)
 #define BANK_INTERVAL_MS    (500)
 
+#define EEPROM_ADDR_BANK    (0)
+#define EEPROM_ADDR_PATCH   (1)
+#define EEPROM_ADDR_CCIDX   (2)
 
 int                 _cc_index = 0;
 bool                _cc_config = false;
 unsigned long       _bank_ts;
-int                 _bank = 0;
-int                 _patch = 0;
+int                 _bank = 0;  // goes from 0 to (MAX_BANKS - 1)
+int                 _patch = 0; // 
 LiquidCrystal_I2C   _display(0x27, 16, 2);
 LCD                 _pg_lcd(_display, barStyle0);
 SmoothProgressBar   _progress(_pg_lcd, 16, 0, 1, 1);
@@ -61,7 +64,7 @@ void update_bank_ui(int bank, int patch) {
     _display.print(F("      "));
     _display.setCursor(0, 0);
     _display.print(F("B"));
-    _display.print(bank);
+    _display.print(bank + 1);
     _display.print(F(" P"));
     _display.print(patch);
     _display.display();
@@ -147,12 +150,14 @@ void on_button_event(uint8_t id, EButtonScanResult event) {
                         _cc_index = CC_DATA_LEN - 1;
                     }
                     update_cc_info();
+                    EEPROM.update(EEPROM_ADDR_CCIDX, _cc_index);
                 }
                 else if (id == PIN_BUTTON_4) {
                     if (++_cc_index == CC_DATA_LEN) {
                         _cc_index = 0;
                     }
                     update_cc_info();
+                    EEPROM.update(EEPROM_ADDR_CCIDX, _cc_index);
                 }
             }
             else {
@@ -160,8 +165,13 @@ void on_button_event(uint8_t id, EButtonScanResult event) {
                 uint8_t pc = (id - PIN_BUTTON_1) + ((_bank * MAX_BUTTONS) + 1);
                 _patch = pc;
                 send_pc(pc);
-                // update_pc_ui(pc);
-                update_bank_ui(_bank + 1, _patch);
+                update_bank_ui(_bank, _patch);
+                EEPROM.update(EEPROM_ADDR_BANK, _bank & 0xff);
+                EEPROM.update(EEPROM_ADDR_PATCH, _patch & 0xff);
+                dprint(F("SAVED "));
+                dprint(_bank);
+                dprint(F("-"));
+                dprintln(_patch);
             }
         } break;
 
@@ -183,7 +193,7 @@ void on_button_event(uint8_t id, EButtonScanResult event) {
                     update_cc_info();
                 }
                 else {
-                    update_bank_ui(_bank + 1, _patch);
+                    update_bank_ui(_bank, _patch);
                     refresh_exp_value();
                 }
             }
@@ -195,13 +205,15 @@ void on_button_event(uint8_t id, EButtonScanResult event) {
                     if (--_bank < 0) {
                         _bank = MAX_BANKS - 1;
                     }
-                    update_bank_ui(_bank + 1, _patch);
+                    update_bank_ui(_bank, _patch);
+                    // EEPROM.put(EEPROM_ADDR_BANK, _bank & 0xff);
                 }
                 else if (id == PIN_BUTTON_4) {
                     if (++_bank == MAX_BANKS) {
                         _bank = 0;
                     }
-                    update_bank_ui(_bank + 1, _patch);
+                    update_bank_ui(_bank, _patch);
+                    // EEPROM.put(EEPROM_ADDR_BANK, _bank & 0xff);
                 }
                 _bank_ts = millis();
             }
@@ -223,13 +235,23 @@ void setup() {
     _midi_serial.begin(31250); // Initialize SoftwareSerial at MIDI baud rate
     _midi_out.begin();         // Initialize the MIDI library
   
-
     dprintinit(9600);
     dprintln(F("start"));
     dprintln(CC_DATA_LEN);
     // MIDI.begin(MIDI_CHANNEL_OMNI);  // Listen to all incoming messages
-    _bank = 0;
-    
+    _bank = EEPROM.read(EEPROM_ADDR_BANK);
+    if (_bank > MAX_BANKS) {
+        _bank = 0;
+    }
+    _patch = EEPROM.read(EEPROM_ADDR_PATCH);
+    if (_patch > MAX_PATCHES) {
+        _patch = 0;
+    }
+    _cc_index = EEPROM.read(EEPROM_ADDR_CCIDX);
+    if (_cc_index > CC_DATA_LEN) {
+        _cc_index = 0;
+    }
+
     _display.init();
     _display.clear();
     _display.backlight();
@@ -244,7 +266,7 @@ void setup() {
     delay(2000);
     _display.clear();
 
-    update_bank_ui(_bank + 1, _patch + 1);
+    update_bank_ui(_bank, _patch);
     refresh_exp_value();
 }
 
