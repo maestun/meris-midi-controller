@@ -1,5 +1,6 @@
 
 #include <Arduino.h>
+#include <EEPROM.h>
 #include <SoftwareSerial.h>
 #include <LiquidCrystal_I2C.h>
 #include <SmoothProgress.h>
@@ -56,7 +57,8 @@ Button          _button_4(PIN_BUTTON_4, LONGPRESS_DELAY_MS, on_button_event);
 void update_bank_ui(int bank, int patch) {
     dprint(F("BANK: "));
     dprintln(bank);
-
+    _display.setCursor(0, 0);
+    _display.print(F("      "));
     _display.setCursor(0, 0);
     _display.print(F("B"));
     _display.print(bank);
@@ -66,22 +68,19 @@ void update_bank_ui(int bank, int patch) {
 }
 
 
-// void update_pc_ui(uint8_t pc) {
-//     dprint(F("PC: "));
-//     dprintln(pc);
-// }
-
-
 void update_cc_ui(uint8_t cc_val, uint8_t percent) {
     dprint(F("CC VAL: "));
     dprintln(cc_val);
+    dprint(F(" - "));
+    dprintln(percent);
 
-    _display.setCursor(0, 0);
-    _display.print(F("CC #"));
+    _display.setCursor(9, 0);
+    _display.print(F("       "));
+    _display.setCursor(9, 0);
+    _display.print(F("EXP "));
     _display.print(cc_val);
     _progress.showProgressPct(percent);
-
-    // _display.display();
+    _display.display();
 }
 
 
@@ -92,13 +91,25 @@ void update_cc_info() {
     dprint(idx);
     dprint(F(" - "));
     dprintln(name);
+    dprint(F(" - "));
+    dprintln(name);
 
+    _display.clear();
     _display.setCursor(0, 0);
     _display.print(F("CC #"));
     _display.print(idx);
     _display.setCursor(0, 1);
     _display.print(name);
     _display.display();
+}
+
+
+void refresh_exp_value() {
+    int raw = analogRead(PIN_EXPRESSION);
+    meris_cc_t cc_data = CC_DATA[_cc_index];
+    int exp = map(raw, 0, 1023, cc_data.min, cc_data.max);
+    int percent = map(exp, cc_data.min, cc_data.max, 0, 100);
+    update_cc_ui(exp, percent);
 }
 
 
@@ -130,16 +141,16 @@ void on_button_event(uint8_t id, EButtonScanResult event) {
 
         case EButtonClick: {
             if(_cc_config) {
-                // CC config mode: buttons 1 & 4 nagigates thru CC values
+                // CC config mode: buttons 1 & 4 navigates thru CC values
                 if (id == PIN_BUTTON_1) {
-                    if (++_cc_index == CC_DATA_LEN) {
-                        _cc_index = 0;
+                    if (--_cc_index < 0) {
+                        _cc_index = CC_DATA_LEN - 1;
                     }
                     update_cc_info();
                 }
                 else if (id == PIN_BUTTON_4) {
-                    if (--_cc_index < 0) {
-                        _cc_index = CC_DATA_LEN - 1;
+                    if (++_cc_index == CC_DATA_LEN) {
+                        _cc_index = 0;
                     }
                     update_cc_info();
                 }
@@ -157,13 +168,13 @@ void on_button_event(uint8_t id, EButtonScanResult event) {
         case EButtonLongpress: {
             _bank_ts = 0;
 
-            // CC config mode
             if (id == PIN_BUTTON_2) {
                 _bt2_ulp = true;
             }
             if (id == PIN_BUTTON_3) {
                 _bt3_ulp = true;
             }
+            // CC config mode
             if (_bt2_ulp && _bt3_ulp) {
                 _cc_config = !_cc_config;
                 dprint(F("CC CONFIG "));
@@ -173,21 +184,22 @@ void on_button_event(uint8_t id, EButtonScanResult event) {
                 }
                 else {
                     update_bank_ui(_bank + 1, _patch);
+                    refresh_exp_value();
                 }
             }
         } break;
         case EButtonHold: {
             // bank up/down
-            if (millis() - _bank_ts > BANK_INTERVAL_MS) {
+            if (!_cc_config && millis() - _bank_ts > BANK_INTERVAL_MS) {
                 if (id == PIN_BUTTON_1) {
-                    if (++_bank == MAX_BANKS) {
-                        _bank = 0;
+                    if (--_bank < 0) {
+                        _bank = MAX_BANKS - 1;
                     }
                     update_bank_ui(_bank + 1, _patch);
                 }
                 else if (id == PIN_BUTTON_4) {
-                    if (--_bank < 0) {
-                        _bank = MAX_BANKS - 1;
+                    if (++_bank == MAX_BANKS) {
+                        _bank = 0;
                     }
                     update_bank_ui(_bank + 1, _patch);
                 }
@@ -229,8 +241,11 @@ void setup() {
     _display.print(GIT_HASH);
     _display.setCursor(11, 1);
     _display.print(GIT_TAG);
-    delay(1000);
+    delay(2000);
+    _display.clear();
+
     update_bank_ui(_bank + 1, _patch + 1);
+    refresh_exp_value();
 }
 
 
