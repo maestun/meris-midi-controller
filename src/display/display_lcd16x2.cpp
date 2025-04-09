@@ -57,7 +57,7 @@ void LCD16x2Display::update_cc_ui(uint8_t cc_val, uint8_t percent) {
     _lcd.print(F("EXP "));
     _lcd.print(cc_val);
     _progress.showProgressPct(percent);
-    _lcd.display();
+    // _lcd.display();
 }
 
 

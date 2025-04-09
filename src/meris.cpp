@@ -189,6 +189,9 @@ void setup() {
 
 
 void loop() {
+
+    static const int THRESHOLD = 1;
+
     static int _exp_prev = 0;
     _button_1.scan();
     _button_2.scan();
@@ -201,7 +204,8 @@ void loop() {
         // ...
         meris_cc_t cc_data = MERIS_CC_DATA[_cc_index];
         int exp = map(raw, 0, 1023, cc_data.min, cc_data.max);
-        if (exp != _exp_prev) {
+        // if (exp + THRESHOLD > _exp_prev || exp - THRESHOLD < _exp_prev) {
+        if (exp < _exp_prev - THRESHOLD || exp > _exp_prev + THRESHOLD) {
             send_cc(exp);
             int percent = map(exp, cc_data.min, cc_data.max, 0, 100);
             _display->update_cc_ui(exp, percent);
