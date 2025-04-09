@@ -118,21 +118,21 @@ meris_cc_t* build_cc_data(int* len) {
 }
 
 
-const __FlashStringHelper * build_name () {
+const String build_name () {
 #if defined(DEVICE_ENZO)
-    static const __FlashStringHelper * name = F("      ENZO      ");
+    static const String name = F("ENZO");
 #elif defined(DEVICE_HEDRA)
-    static const __FlashStringHelper * name = F("     HEDRA      ");
+    static const String name = F("HEDRA");
 #elif defined(DEVICE_MERCURY7)
-    static const __FlashStringHelper * name = F("    MERCURY7    ");
+    static const String name = F("MERCURY7");
 #elif defined(DEVICE_OTTOBIT)
-    static const __FlashStringHelper * name = F("    OTTOBIT     ");
+    static const String name = F("OTTOBIT");
 #elif defined(DEVICE_POLYMOON)
-    static const __FlashStringHelper * name = F("    POLYMOON    ");
+    static const String name = "POLYMOON";
 #endif
     return name;
 }
 
 int MERIS_CC_DATA_LEN;
 static const meris_cc_t* MERIS_CC_DATA = build_cc_data(&MERIS_CC_DATA_LEN);
-const __FlashStringHelper * MERIS_DEVICE_NAME = build_name();
+const String MERIS_DEVICE_NAME = build_name();

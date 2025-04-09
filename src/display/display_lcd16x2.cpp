@@ -10,16 +10,19 @@
 #include "debug.h"
 #include "version.h"
 
-LiquidCrystal_I2C   _lcd(0x27, 16, 2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
-LCD                 _progress_lcd(_lcd, barStyle0);
-SmoothProgressBar   _progress(_progress_lcd, 16, 0, 1, 1);
+#define CHARS_PER_LINE  (16)
+#define LINE_COUNT      (16)
 
-LCD16x2Display::LCD16x2Display(const __FlashStringHelper * device_name) {
+LiquidCrystal_I2C   _lcd(0x27, CHARS_PER_LINE, LINE_COUNT);  // set the LCD address to 0x27 for a 16 chars and 2 line display
+LCD                 _progress_lcd(_lcd, barStyle0);
+SmoothProgressBar   _progress(_progress_lcd, CHARS_PER_LINE, 0, 1, 1);
+
+LCD16x2Display::LCD16x2Display(const String device_name) {
     _lcd.init();
     _lcd.backlight();
     _progress_lcd.begin();
 
-    _lcd.setCursor(0, 0);
+    _lcd.setCursor((CHARS_PER_LINE - device_name.length()) >> 1, 0);
     _lcd.print(device_name);
     _lcd.setCursor(0, 1);
     _lcd.print(GIT_HASH);
