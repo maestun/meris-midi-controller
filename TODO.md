@@ -1,3 +1,3 @@
 - [ ] fix exp pedal filter
-- [ ] return from cc_config: no exp value display
-- [ ] save last to eeprom
+- [x] return from cc_config: no exp value display
+- [x] save last to eeprom
