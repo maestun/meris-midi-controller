@@ -1,8 +1,9 @@
 # Meris MIDI Controller
 
-Allows full MIDI control of Meris 'small box' pedals:
+PlatformIO project, allows full MIDI control of Meris 'small box' pedals:
 - preset selection (1 to 16)
 - CC messages with an optional expression pedal
+- Tested with Polymoon, should also work with Mercury7 / Hedra / Enzo / Ottobit (configure environments in `platform.ini`
 
 ## Wiring
 
