@@ -33,11 +33,17 @@ Button          _button_4(PIN_BUTTON_4, LONGPRESS_DELAY_MS, on_button_event);
 
 
 void refresh_exp_value() {
-    int raw = analogRead(PIN_EXPRESSION);
     meris_cc_t cc_data = MERIS_CC_DATA[_cc_index];
-    int exp = map(raw, 0, 1023, cc_data.min, cc_data.max);
-    int percent = map(exp, cc_data.min, cc_data.max, 0, 100);
-    _display->update_cc_ui(exp, percent);
+    if (cc_data.cc != MERIS_CC_NONE) {
+        digitalWrite(PIN_EXPRESSION_LED, HIGH);
+        int raw = analogRead(PIN_EXPRESSION);
+        int exp = map(raw, 0, 1023, cc_data.min, cc_data.max);
+        int percent = map(exp, cc_data.min, cc_data.max, 0, 100);
+        _display->update_cc_ui(exp, percent);
+    }
+    else {
+        digitalWrite(PIN_EXPRESSION_LED, LOW);
+    }
 }
 
 
@@ -48,8 +54,8 @@ void send_pc(uint8_t command) {
 
 
 void send_cc(uint8_t value) {
-    uint8_t cc = (value & 0x7F);
-    _midi_out.sendControlChange(MERIS_CC_DATA[_cc_index].idx, cc, MIDI_CHANNEL);
+    uint8_t val = (value & 0x7F);
+    _midi_out.sendControlChange(MERIS_CC_DATA[_cc_index].cc, val, MIDI_CHANNEL);
 }
 
 
@@ -58,7 +64,7 @@ void on_button_event(uint8_t id, EButtonScanResult event) {
     static bool _cc1_ulp = false;
     static bool _cc2_ulp = false;
 
-    uint8_t idx = MERIS_CC_DATA[_cc_index].idx;
+    uint8_t cc = MERIS_CC_DATA[_cc_index].cc;
     const __FlashStringHelper * name = MERIS_CC_DATA[_cc_index].name;
 
     switch (event) {
@@ -75,14 +81,14 @@ void on_button_event(uint8_t id, EButtonScanResult event) {
                     if (--_cc_index < 0) {
                         _cc_index = MERIS_CC_DATA_LEN - 1;
                     }
-                    _display->update_cc_info(idx, name);
+                    _display->update_cc_info(cc, name);
                     EEPROM.update(EEPROM_ADDR_CCIDX, _cc_index);
                 }
                 else if (id == BUTTON_BANK_UP) {
                     if (++_cc_index == MERIS_CC_DATA_LEN) {
                         _cc_index = 0;
                     }
-                    _display->update_cc_info(idx, name);
+                    _display->update_cc_info(cc, name);
                     EEPROM.update(EEPROM_ADDR_CCIDX, _cc_index);
                 }
             }
@@ -116,7 +122,7 @@ void on_button_event(uint8_t id, EButtonScanResult event) {
                 dprint(F("CC CONFIG "));
                 dprintln(_cc_config ? F("ON") : F("OFF"));
                 if (_cc_config) {
-                    _display->update_cc_info(idx, name);
+                    _display->update_cc_info(cc, name);
                 }
                 else {
                     _display->update_bank_ui(_bank, _patch);
@@ -155,6 +161,7 @@ void on_button_event(uint8_t id, EButtonScanResult event) {
 
 
 void setup() {
+    pinMode(PIN_EXPRESSION_LED, OUTPUT);
 
     _midi_serial.begin(31250);
     _midi_out.begin(MIDI_CHANNEL_OFF);
@@ -199,17 +206,22 @@ void loop() {
     _button_4.scan();
 
     if (!_cc_config) {
-        int raw = analogRead(PIN_EXPRESSION);
-        // TODO: filter ?
-        // ...
         meris_cc_t cc_data = MERIS_CC_DATA[_cc_index];
-        int exp = map(raw, 0, 1023, cc_data.min, cc_data.max);
-        // if (exp + THRESHOLD > _exp_prev || exp - THRESHOLD < _exp_prev) {
-        if (exp < _exp_prev - THRESHOLD || exp > _exp_prev + THRESHOLD) {
-            send_cc(exp);
-            int percent = map(exp, cc_data.min, cc_data.max, 0, 100);
-            _display->update_cc_ui(exp, percent);
-            _exp_prev = exp;
+        if (cc_data.cc != MERIS_CC_NONE) {
+            digitalWrite(PIN_EXPRESSION_LED, HIGH);
+
+            // TODO: smarter filter ?
+            int raw = analogRead(PIN_EXPRESSION);
+            int exp = map(raw, 0, 1023, cc_data.min, cc_data.max);
+            if (exp < _exp_prev - THRESHOLD || exp > _exp_prev + THRESHOLD) {
+                send_cc(exp);
+                int percent = map(exp, cc_data.min, cc_data.max, 0, 100);
+                _display->update_cc_ui(exp, percent);
+                _exp_prev = exp;
+            }
+        }
+        else {
+            digitalWrite(PIN_EXPRESSION_LED, LOW);
         }
     }
 }

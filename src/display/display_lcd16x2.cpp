@@ -21,7 +21,6 @@ LCD16x2Display::LCD16x2Display(const String device_name) {
     _lcd.init();
     _lcd.backlight();
     _progress_lcd.begin();
-
     _lcd.setCursor((CHARS_PER_LINE - device_name.length()) >> 1, 0);
     _lcd.print(device_name);
     _lcd.setCursor(0, 1);
@@ -55,18 +54,17 @@ void LCD16x2Display::update_cc_ui(uint8_t cc_val, uint8_t percent) {
     dprintln(percent);
 
     _lcd.setCursor(9, 0);
-    _lcd.print(F("       "));
+    _lcd.print(F("        "));
     _lcd.setCursor(9, 0);
     _lcd.print(F("EXP "));
     _lcd.print(cc_val);
     _progress.showProgressPct(percent);
-    // _lcd.display();
 }
 
 
-void LCD16x2Display::update_cc_info(uint8_t idx, const __FlashStringHelper * name) {
+void LCD16x2Display::update_cc_info(uint8_t cc, const __FlashStringHelper * name) {
     dprint(F("CC #"));
-    dprint(idx);
+    dprint(cc);
     dprint(F(" - "));
     dprintln(name);
     dprint(F(" - "));
@@ -75,7 +73,7 @@ void LCD16x2Display::update_cc_info(uint8_t idx, const __FlashStringHelper * nam
     _lcd.clear();
     _lcd.setCursor(0, 0);
     _lcd.print(F("CC #"));
-    _lcd.print(idx);
+    _lcd.print(cc);
     _lcd.setCursor(0, 1);
     _lcd.print(name);
     _lcd.display();

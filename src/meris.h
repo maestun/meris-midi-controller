@@ -3,9 +3,10 @@
 #include <Arduino.h>
 
 #define MERIS_MAX_PATCHES   (16)
+#define MERIS_CC_NONE       (255)
 
 typedef struct {
-    uint8_t idx;
+    uint8_t cc;
     uint8_t min;
     uint8_t max;
     const __FlashStringHelper * name;
@@ -112,6 +113,7 @@ meris_cc_t* build_cc_data(int* len) {
         {   30, 0,  127,    F("FLANGER FEEDBACK") },
         {   31, 0,  127,    F("HALF SPEED") },
 #endif
+        {   MERIS_CC_NONE,  0,  0,      F("EXP OFF") },
     };
     *len = sizeof(_cc_data) / sizeof(meris_cc_t);
     return _cc_data;

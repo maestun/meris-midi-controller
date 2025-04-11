@@ -14,6 +14,7 @@
 
 // expression pedal wiring: pot1 --> GND / pot2 --> PIN / pot3 --> VCC
 #define PIN_EXPRESSION      (A0)
+#define PIN_EXPRESSION_LED  (9)
 
 // MIDI TRS wiring: TX PIN --> jack tip / jack sleeve --> GND (leave ring floating)
 #define PIN_MIDI_TX         (10)
