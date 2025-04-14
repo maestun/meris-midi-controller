@@ -59,13 +59,17 @@ void send_cc(uint8_t value) {
 }
 
 
+void update_cc() {
+    uint8_t cc = MERIS_CC_DATA[_cc_index].cc;
+    const __FlashStringHelper * name = MERIS_CC_DATA[_cc_index].name;
+    _display->update_cc_info(cc, name);
+    EEPROM.update(EEPROM_ADDR_CCIDX, _cc_index);
+}
+
 void on_button_event(uint8_t id, EButtonScanResult event) {
 
     static bool _cc1_ulp = false;
     static bool _cc2_ulp = false;
-
-    uint8_t cc = MERIS_CC_DATA[_cc_index].cc;
-    const __FlashStringHelper * name = MERIS_CC_DATA[_cc_index].name;
 
     switch (event) {
         case EButtonDown: {
@@ -81,15 +85,13 @@ void on_button_event(uint8_t id, EButtonScanResult event) {
                     if (--_cc_index < 0) {
                         _cc_index = MERIS_CC_DATA_LEN - 1;
                     }
-                    _display->update_cc_info(cc, name);
-                    EEPROM.update(EEPROM_ADDR_CCIDX, _cc_index);
+                    update_cc();
                 }
                 else if (id == BUTTON_BANK_UP) {
                     if (++_cc_index == MERIS_CC_DATA_LEN) {
                         _cc_index = 0;
                     }
-                    _display->update_cc_info(cc, name);
-                    EEPROM.update(EEPROM_ADDR_CCIDX, _cc_index);
+                    update_cc();
                 }
             }
             else {
@@ -122,7 +124,11 @@ void on_button_event(uint8_t id, EButtonScanResult event) {
                 dprint(F("CC CONFIG "));
                 dprintln(_cc_config ? F("ON") : F("OFF"));
                 if (_cc_config) {
-                    _display->update_cc_info(cc, name);
+
+                    // dprint(F("IDX "));
+                    // dprintln(_cc_index);
+                    update_cc();
+                    // _display->update_cc_info(cc, name);
                 }
                 else {
                     _display->update_bank_ui(_bank, _patch);
@@ -168,7 +174,6 @@ void setup() {
   
     dprintinit(9600);
     dprintln(F("start"));
-    dprintln(MERIS_CC_DATA_LEN);
     _bank = EEPROM.read(EEPROM_ADDR_BANK);
     if (_bank > MAX_BANKS) {
         _bank = 0;
