@@ -15,7 +15,7 @@
 
 LiquidCrystal_I2C   _lcd(0x27, CHARS_PER_LINE, LINE_COUNT);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 LCD                 _progress_lcd(_lcd, barStyle0);
-SmoothProgressBar   _progress(_progress_lcd, CHARS_PER_LINE, 0, 1, 1);
+SmoothProgressBar   _progress(_progress_lcd, 10, 6, 0, 1);
 
 LCD16x2Display::LCD16x2Display(const String device_name) {
     _lcd.init();
@@ -38,7 +38,7 @@ void LCD16x2Display::update_bank_ui(int bank, int patch) {
     dprint(F("BANK: "));
     dprintln(bank);
     _lcd.setCursor(0, 0);
-    _lcd.print(F("                "));
+    _lcd.print(F("      "));
     _lcd.setCursor(0, 0);
     _lcd.print(F("B"));
     _lcd.print(bank + 1);
@@ -54,25 +54,36 @@ void LCD16x2Display::update_cc_ui(uint8_t cc_val, uint8_t percent) {
     dprint(F(" - "));
     dprintln(percent);
 
-    _lcd.setCursor(9, 0);
-    _lcd.print(F("        "));
-    _lcd.setCursor(9, 0);
-    _lcd.print(F("EXP "));
-    _lcd.print(cc_val);
+    // _lcd.setCursor(9, 0);
+    // _lcd.print(F("        "));
+    // _lcd.setCursor(9, 0);
+    // _lcd.print(F("EXP "));
+    // _lcd.print(cc_val);
     _progress.showProgressPct(percent);
 }
 
 
-void LCD16x2Display::update_cc_info(uint8_t cc, const __FlashStringHelper * name) {
+void LCD16x2Display::update_cc_info(uint8_t cc) {
     dprint(F("CC #"));
     dprint(cc);
-    dprint(F(" - "));
-    dprintln(name);
 
-    _lcd.clear();
+    // _lcd.clear();
+    _lcd.setCursor(0, 0);
+    _lcd.print(F("                "));
     _lcd.setCursor(0, 0);
     _lcd.print(F("CC #"));
     _lcd.print(cc);
+    _lcd.display();
+}
+
+
+void LCD16x2Display::update_cc_info(const __FlashStringHelper * name) {
+    dprint(F(" - "));
+    dprintln(name);
+
+    // _lcd.clear();
+    _lcd.setCursor(0, 1);
+    _lcd.print(F("                "));
     _lcd.setCursor(0, 1);
     _lcd.print(name);
     _lcd.display();
