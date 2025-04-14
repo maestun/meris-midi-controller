@@ -62,7 +62,8 @@ void send_cc(uint8_t value) {
 void update_cc() {
     uint8_t cc = MERIS_CC_DATA[_cc_index].cc;
     const __FlashStringHelper * name = MERIS_CC_DATA[_cc_index].name;
-    _display->update_cc_info(cc, name);
+    _display->update_cc_info(cc);
+    _display->update_cc_info(name);
     EEPROM.update(EEPROM_ADDR_CCIDX, _cc_index);
 }
 
@@ -196,6 +197,8 @@ void setup() {
     _display->clear();
 
     _display->update_bank_ui(_bank, _patch);
+    const __FlashStringHelper * name = MERIS_CC_DATA[_cc_index].name;
+    _display->update_cc_info(name);
     refresh_exp_value();
 }
 

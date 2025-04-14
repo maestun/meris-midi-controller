@@ -3,7 +3,7 @@
 #include <Arduino.h>
 
 #define MERIS_MAX_PATCHES   (16)
-#define MERIS_CC_NONE       (255)
+#define MERIS_CC_NONE       (0)
 
 typedef struct {
     uint8_t cc;
