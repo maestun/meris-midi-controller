@@ -48,7 +48,7 @@ void LCD16x2Display::update_bank_ui(int bank, int patch) {
 }
 
 
-void LCD16x2Display::update_cc_ui(uint8_t cc_val, uint8_t percent) {
+void LCD16x2Display::update_cc_value(uint8_t cc_val, uint8_t percent) {
     dprint(F("CC VAL: "));
     dprintln(cc_val);
     dprint(F(" - "));
@@ -63,7 +63,7 @@ void LCD16x2Display::update_cc_ui(uint8_t cc_val, uint8_t percent) {
 }
 
 
-void LCD16x2Display::update_cc_info(uint8_t cc) {
+void LCD16x2Display::update_cc_name(uint8_t cc) {
     dprint(F("CC #"));
     dprint(cc);
 
@@ -77,7 +77,7 @@ void LCD16x2Display::update_cc_info(uint8_t cc) {
 }
 
 
-void LCD16x2Display::update_cc_info(const __FlashStringHelper * name) {
+void LCD16x2Display::update_cc_name(const __FlashStringHelper * name) {
     dprint(F(" - "));
     dprintln(name);
 

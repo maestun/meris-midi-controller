@@ -4,10 +4,10 @@
 static const uint8_t  DEBOUNCE_MS = 20;
 static const int8_t   BUTTON_NULL = -1;
 
-Button::Button(uint8_t aPin, uint16_t aLongpressDelayMS, ButtonListener * aListener, uint8_t aMode) {
+Button::Button(uint8_t id, uint8_t aPin, uint16_t aLongpressDelayMS, ButtonListener * aListener, uint8_t aMode) {
     pinMode(aPin, aMode);
     _inputMode = aMode;
-    _id = aPin;
+    _id = id;
     _longpressed = false;
     _longpressMS = aLongpressDelayMS;
     _longpressTS = 0;
@@ -17,8 +17,8 @@ Button::Button(uint8_t aPin, uint16_t aLongpressDelayMS, ButtonListener * aListe
     _prevButton = BUTTON_NULL;
 }
 
-Button::Button(uint8_t aPin, uint16_t aLongpressDelayMS, button_cb_t aCallback, uint8_t aMode) : 
-    Button(aPin, aLongpressDelayMS, (ButtonListener *)NULL, aMode) {
+Button::Button(uint8_t id, uint8_t aPin, uint16_t aLongpressDelayMS, button_cb_t aCallback, uint8_t aMode) : 
+    Button(id, aPin, aLongpressDelayMS, (ButtonListener *)NULL, aMode) {
     _fptr = aCallback;
 }
 

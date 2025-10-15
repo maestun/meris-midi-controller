@@ -45,8 +45,8 @@ protected:
     void                onButtonPressed();
     void                scanLogic(int8_t aState);
 public:
-    Button(uint8_t aPin, uint16_t aLongpressDelayMS, ButtonListener * aListener, uint8_t aMode = INPUT_PULLUP);
-    Button(uint8_t aPin, uint16_t aLongpressDelayMS, button_cb_t aCallback, uint8_t aMode = INPUT_PULLUP);
+    Button(uint8_t id, uint8_t aPin, uint16_t aLongpressDelayMS, ButtonListener * aListener, uint8_t aMode = INPUT_PULLUP);
+    Button(uint8_t id, uint8_t aPin, uint16_t aLongpressDelayMS, button_cb_t aCallback, uint8_t aMode = INPUT_PULLUP);
     void scan();
 };
 
@@ -57,26 +57,26 @@ private:
     uint16_t            _analogValue;
     uint8_t             _deltaValue;
 public:
-    AnalogButton(uint8_t aAnalogPin, 
-                 uint8_t aAnalogID, 
+    AnalogButton(uint8_t aAnalogID, 
+                 uint8_t aAnalogPin, 
                  uint16_t aAnalogValue, 
                  uint8_t aDeltaValue, 
                  uint16_t aLongpressDelayMS, 
                  ButtonListener * aListener,
                  uint8_t aMode = INPUT) :
-        Button(aAnalogID, aLongpressDelayMS, aListener, aMode) {
+        Button(aAnalogID, aAnalogPin, aLongpressDelayMS, aListener, aMode) {
             _analogValue = aAnalogValue;
             _deltaValue= aDeltaValue;
     }
 
-    AnalogButton(uint8_t aAnalogPin, 
+    AnalogButton(uint8_t aAnalogID,
+                 uint8_t aAnalogPin, 
                  uint16_t aAnalogValue,
-                 uint8_t aAnalogID,
                  uint8_t aDeltaValue, 
                  uint16_t aLongpressDelayMS, 
                  button_cb_t aCallback,
                  uint8_t aMode = INPUT) :
-        Button(aAnalogID, aLongpressDelayMS, (button_cb_t)NULL, aMode) {
+        Button(aAnalogID, aAnalogPin, aLongpressDelayMS, (button_cb_t)NULL, aMode) {
             _analogPin = aAnalogPin;
             _analogValue = aAnalogValue;
             _deltaValue = aDeltaValue;

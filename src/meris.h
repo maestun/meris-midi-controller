@@ -4,6 +4,7 @@
 
 #define MERIS_MAX_PATCHES   (16)
 #define MERIS_CC_NONE       (0)
+#define MERIS_CC_IDX_BYPASS (2)
 
 typedef struct {
     uint8_t cc;

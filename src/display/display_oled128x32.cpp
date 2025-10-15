@@ -50,7 +50,7 @@ void OLEDDisplay::update_bank_ui(int bank, int patch) {
 }
 
 
-void OLEDDisplay::update_cc_ui(uint8_t cc_val, uint8_t percent) {
+void OLEDDisplay::update_cc_value(uint8_t cc_val, uint8_t percent) {
     // _oled.setCursor(0, 1 * CHAR_HEIGHT);
     // _oled.print(F("        "));
     // _oled.display();
@@ -64,14 +64,14 @@ void OLEDDisplay::update_cc_ui(uint8_t cc_val, uint8_t percent) {
 }
 
 
-void OLEDDisplay::update_cc_info(uint8_t cc) {
+void OLEDDisplay::update_cc_name(uint8_t cc) {
     clear();
     _oled.setCursor(0, 0);
     _oled.print(cc);
     _oled.display();
 }
 
-void OLEDDisplay::update_cc_info(const __FlashStringHelper * name) {
+void OLEDDisplay::update_cc_name(const __FlashStringHelper * name) {
     clear();
     _oled.setCursor(0, 0);
     _oled.print(name);

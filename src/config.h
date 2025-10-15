@@ -3,7 +3,6 @@
 #include "meris.h"
 
 // ui: number of buttons on the pedal
-#define MAX_BUTTONS         (4)
 #define MAX_BANKS           (MERIS_MAX_PATCHES / MAX_BUTTONS)
 
 // button wiring: PIN --> button --> GND
@@ -11,6 +10,10 @@
 #define PIN_BUTTON_2        (3)
 #define PIN_BUTTON_3        (4)
 #define PIN_BUTTON_4        (5)
+#define PIN_LED_1           (6)
+#define PIN_LED_2           (7)
+#define PIN_LED_3           (8)
+#define PIN_LED_4           (11)
 
 // expression pedal wiring: pot1 --> GND / pot2 --> PIN / pot3 --> VCC
 #define PIN_EXPRESSION      (A0)
@@ -32,7 +35,7 @@
 #define EEPROM_ADDR_CCIDX   (2)
 
 // ui config
-#define BUTTON_BANK_UP      (PIN_BUTTON_4)
 #define BUTTON_BANK_DOWN    (PIN_BUTTON_1)
+#define BUTTON_BANK_UP      (PIN_BUTTON_4)
 #define BUTTON_CONFIG_CC_1  (PIN_BUTTON_2)
 #define BUTTON_CONFIG_CC_2  (PIN_BUTTON_3)
